@@ -6,3 +6,4 @@ openai
 ultralytics
 redis
 celery
+python-dotenv
