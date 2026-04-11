@@ -8,6 +8,10 @@ from app.worker import process_image, celery
 
 app = FastAPI()
 
+@app.get("/")
+def home():
+    return {"status": "Backend is live 🚀"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
