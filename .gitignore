@@ -1,0 +1,33 @@
+# 🔐 ENV FILES (NEVER PUSH)
+.env
+.env.*
+
+# 🧠 Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 📦 Virtual environment
+venv/
+.env/
+.venv/
+
+# 🗂 Temp images (VERY IMPORTANT FOR YOU)
+temp_*.jpg
+temp_*.png
+
+# 🐳 Docker (if used)
+*.log
+
+# 🧠 Celery / Redis
+celerybeat-schedule
+dump.rdb
+
+# 📊 IDE files
+.vscode/
+.idea/
+
+# 🖥 OS files
+.DS_Store
+Thumbs.db
