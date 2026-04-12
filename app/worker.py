@@ -3,16 +3,14 @@ import os
 import base64
 import json
 import re
-from dotenv import load_dotenv
 from openai import OpenAI
 
-load_dotenv()
 
-# ✅ Proper Celery config
+
 celery = Celery(
     "worker",
-    broker="redis://localhost:6379/0",
-    backend="redis://localhost:6379/0"
+    broker=os.getenv("REDIS_URL"),
+    backend=os.getenv("REDIS_URL")
 )
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))

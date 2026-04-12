@@ -2,12 +2,12 @@ import os
 import json
 import base64
 import hashlib
-from dotenv import load_dotenv
+
 from openai import OpenAI
 
 from app.yolo_service import detect_food_items
 
-load_dotenv()
+
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
