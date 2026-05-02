@@ -19,42 +19,35 @@ def process_image(self, image_path):
     try:
         print("NEW WORKER RUNNING 🚀")
 
-        # Read image and convert to base64
+        # Read image → base64
         with open(image_path, "rb") as f:
             image_base64 = base64.b64encode(f.read()).decode()
 
         prompt = """
 You are an expert nutritionist.
 
-Analyze the image carefully.
+Task:
+1) Determine if the image contains ANY edible food.
+2) If yes, estimate nutrition.
 
-CRITICAL RULES:
+Rules:
+- If ANY edible item is visible (even multiple small dishes, mixed meals, unclear items), set "is_food": true.
+- Only set "is_food": false if you are highly certain there is no food at all.
+- Do not be overly strict.
 
-- If the image clearly contains NO edible items (e.g., bottle, phone, furniture), return:
+Return JSON ONLY in this exact format:
+
 {
-  "is_food": false,
-  "confidence": 0
-}
-
-- If the image contains ANY edible items (even if multiple items, mixed meals, or unclear), treat it as FOOD and return:
-{
-  "is_food": true,
-  "food": "general meal name (e.g., mixed meal, snack, dish name if clear)",
-  "items": ["list of visible food items"],
-  "calories": realistic estimate,
+  "is_food": boolean,
+  "confidence": number,
+  "reason": "short explanation",
+  "food": "meal name or general label",
+  "items": ["item1", "item2"],
+  "calories": number,
   "protein": number,
   "carbs": number,
-  "fat": number,
-  "confidence": number
+  "fat": number
 }
-
-IMPORTANT:
-- Meals may contain multiple items → still treat as food
-- Even partial or unclear food → treat as food
-- Only return false if absolutely certain there is no food
-- Do not hallucinate non-existent items, but provide best estimate if visible
-
-Only return valid JSON.
 """
 
         print("CALLING OPENAI")
@@ -75,7 +68,7 @@ Only return valid JSON.
                     ],
                 }
             ],
-            max_tokens=400,
+            max_tokens=500,
         )
 
         content = response.choices[0].message.content
@@ -83,30 +76,45 @@ Only return valid JSON.
 
         # Extract JSON safely
         match = re.search(r"\{.*\}", content, re.DOTALL)
-
         if not match:
             raise Exception("Invalid JSON from model")
 
         result = json.loads(match.group())
 
-        # Ensure is_food exists
-        if "is_food" not in result:
-            result["is_food"] = True
+        # Ensure keys exist (safe defaults)
+        result.setdefault("is_food", True)
+        result.setdefault("confidence", 0.5)
+        result.setdefault("reason", "")
+        result.setdefault("food", "")
+        result.setdefault("items", [])
+        result.setdefault("calories", 0)
+        result.setdefault("protein", 0)
+        result.setdefault("carbs", 0)
+        result.setdefault("fat", 0)
 
-        # Prevent false negatives
+        # ✅ Soft override (model-aware, NOT hardcoded)
         if result.get("is_food") is False:
-            if any(k in result for k in ["food", "items", "calories"]):
+            confidence = result.get("confidence", 0)
+            reason = str(result.get("reason", "")).lower()
+
+            # If model is unsure or mentions food-like context → treat as food
+            if confidence < 0.6 or any(x in reason for x in ["food", "meal", "dish", "plate", "edible"]):
+                print("SOFT OVERRIDE: uncertain → treating as food")
                 result["is_food"] = True
 
         print("FINAL RESULT:", result)
-
         return result
 
     except Exception as e:
         print("ERROR:", str(e))
-
-        # Safe fallback
         return {
             "is_food": False,
-            "confidence": 0
+            "confidence": 0,
+            "reason": "error processing image",
+            "food": "",
+            "items": [],
+            "calories": 0,
+            "protein": 0,
+            "carbs": 0,
+            "fat": 0
         }
