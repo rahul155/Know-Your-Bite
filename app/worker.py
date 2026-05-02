@@ -3,7 +3,9 @@ import os
 import base64
 import json
 import re
+import traceback
 from openai import OpenAI
+from PIL import Image
 
 celery = Celery(
     "worker",
@@ -19,8 +21,16 @@ def process_image(self, image_path):
     try:
         print("WORKER STARTED 🚀")
 
-        # Read image
-        with open(image_path, "rb") as f:
+        # ✅ COMPRESS IMAGE (VERY IMPORTANT)
+        img = Image.open(image_path)
+        img = img.convert("RGB")
+        img.thumbnail((800, 800))
+
+        compressed_path = "compressed.jpg"
+        img.save(compressed_path, format="JPEG", quality=70)
+
+        # Convert to base64
+        with open(compressed_path, "rb") as f:
             image_base64 = base64.b64encode(f.read()).decode()
 
         prompt = """
@@ -70,9 +80,9 @@ Return ONLY JSON:
         )
 
         content = response.choices[0].message.content
-        print("RAW:", content)
+        print("RAW RESPONSE:", content)
 
-        # 🔥 SAFER JSON EXTRACTION
+        # ✅ SAFE JSON PARSING
         try:
             result = json.loads(content)
         except:
@@ -80,7 +90,7 @@ Return ONLY JSON:
             if match:
                 result = json.loads(match.group())
             else:
-                raise Exception("No JSON found")
+                raise Exception("No JSON found in response")
 
         # Defaults
         result.setdefault("is_food", True)
@@ -93,13 +103,15 @@ Return ONLY JSON:
         result.setdefault("carbs", 0)
         result.setdefault("fat", 0)
 
-        print("FINAL:", result)
+        print("FINAL RESULT:", result)
+
         return result
 
     except Exception as e:
-        print("ERROR OCCURRED:", str(e))
+        print("🔥 ERROR OCCURRED:")
+        traceback.print_exc()
 
-        # 🔥 IMPORTANT: return SAFE FOOD instead of FALSE
+        # ✅ SAFE FALLBACK
         return {
             "is_food": True,
             "confidence": 0.3,
