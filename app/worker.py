@@ -36,21 +36,31 @@ def process_image(self, image_path):
         prompt = """
 You are an expert nutritionist.
 
-Task:
-1) Detect if image contains food
-2) If yes, estimate nutrition
+Analyze the image carefully.
 
-Rules:
-- If ANY food is visible → is_food = true
+TASK:
+1. Detect if there is food
+2. Identify the food accurately
+3. Estimate portion size
+4. Estimate nutrition
+
+RULES:
+- If ANY edible food is visible → is_food = true
 - Only return false if absolutely no food
+- Be specific in naming food (not "meal" unless unclear)
+- Estimate portion size: small, medium, large
+- Adjust calories based on portion size
+- Avoid hallucinating items not visible
 
 Return ONLY JSON:
+
 {
   "is_food": boolean,
   "confidence": number,
   "reason": "short explanation",
-  "food": "meal name",
-  "items": ["item1"],
+  "food": "specific name",
+  "items": ["item1", "item2"],
+  "portion": "small | medium | large",
   "calories": number,
   "protein": number,
   "carbs": number,
