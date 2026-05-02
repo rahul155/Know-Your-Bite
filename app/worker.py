@@ -15,7 +15,7 @@ def process_image(self, image_path):
     try:
         print("START PROCESSING")
         with open(image_path, "rb") as f:
-            mage_base64 = base64.b64encode(f.read()).decode()
+            image_base64 = base64.b64encode(f.read()).decode()
 
             prompt = """
    You are an expert nutritionist.
