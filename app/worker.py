@@ -18,25 +18,34 @@ def process_image(self, image_path):
             mage_base64 = base64.b64encode(f.read()).decode()
 
             prompt = """
-    You are an expert nutritionist.
+   You are an expert nutritionist.
 
 Analyze the image carefully.
 
 CRITICAL RULES:
 
-If NOT food → return:
-{"is_food": false, "confidence": 0}
-If food → return:
+If there is CLEARLY NO FOOD → return:
+{
+"is_food": false,
+"confidence": 0
+}
+If the image LIKELY contains food (even if uncertain), still return a best estimate:
 {
 "is_food": true,
 "food": "meal name",
-"items": ["food1"],
+"items": ["food1", "food2"],
 "calories": number,
 "protein": number,
 "carbs": number,
 "fat": number,
 "confidence": number
 }
+
+IMPORTANT:
+
+Do NOT mark food as false if there is ANY reasonable chance it is food
+Even partial / blurry / incomplete food → treat as food
+Only return false if image is clearly NOT food (bottle, laptop, bed, etc.)
 
 Only return JSON.
 """
